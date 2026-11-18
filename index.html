@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F4E79">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mi tren">
+<title>Mi tren</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet"></noscript>
+<style>
+:root{
+  --bg:#F3F5F8; --surface:#FFFFFF; --ink:#1B2430; --muted:#5A6676; --line:#D5DBE3;
+  --blue:#1F4E79; --green:#12804A; --amber:#F2B630; --orange:#E8711A; --purple:#5B3F8C;
+  --on-amber:#1B1B1B;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#10161E; --surface:#1A232E; --ink:#EEF2F6; --muted:#A7B2C0; --line:#2D3946;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10161E; --surface:#1A232E; --ink:#EEF2F6; --muted:#A7B2C0; --line:#2D3946;
+  color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none !important}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font-family:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;
+}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:4px solid #4C9AFF;outline-offset:3px}
+.screen{display:none;min-height:100%;flex-direction:column}
+.screen.on{display:flex}
+/* Lectura fácil: mayúsculas en todo lo que ve él */
+#home,#trip,#help,
+#home button,#trip button,#help button,#help a{text-transform:uppercase;letter-spacing:.02em}
+#home .hint{text-transform:none;letter-spacing:0}
+/* Primer toque: el botón se marca y dice su nombre */
+.armed{outline:8px solid #FFD84D !important;outline-offset:4px;transform:scale(1.03)}
+@media (prefers-reduced-motion: reduce){.armed{transform:none}}
+
+/* ---------- Inicio ---------- */
+#home{padding:20px;gap:18px;max-width:720px;margin:0 auto}
+.home-top{display:flex;justify-content:space-between;align-items:center}
+.home-top h1{font-size:1.6rem;margin:0}
+.gear{width:56px;height:56px;border-radius:50%;border:2px solid var(--line);background:var(--surface);color:var(--muted);display:grid;place-items:center;position:relative}
+.gear svg{width:28px;height:28px}
+.gear .ring{position:absolute;inset:-2px;border-radius:50%;border:3px solid var(--blue);clip-path:inset(0 100% 0 0);transition:none}
+.gear.holding .ring{clip-path:inset(0 0 0 0);transition:clip-path 1.6s linear}
+.trip-btn{flex:1;min-height:200px;border:0;border-radius:28px;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-size:2rem;font-weight:700;padding:20px}
+.trip-btn svg{width:110px;height:110px}
+.trip-btn.to-work{background:var(--blue)}
+.trip-btn.to-home{background:var(--green)}
+.trip-btn img{width:120px;height:120px;object-fit:cover;border-radius:18px;border:4px solid rgba(255,255,255,.7)}
+.help-btn-home{border:0;border-radius:22px;background:var(--purple);color:#fff;font-size:1.4rem;font-weight:700;min-height:84px;display:flex;align-items:center;justify-content:center;gap:12px}
+.help-btn-home svg{width:40px;height:40px}
+.hint{color:var(--muted);font-size:.95rem;text-align:center;margin:0}
+
+/* ---------- Viaje ---------- */
+#trip{color:#fff;transition:background-color .4s}
+#trip.sentado{background:var(--blue)}
+#trip.atento{background:var(--amber);color:var(--on-amber)}
+#trip.preparate{background:var(--orange);color:var(--on-amber)}
+#trip.bajate{background:var(--green)}
+#trip.llegado{background:var(--green)}
+.trip-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;gap:12px}
+.dest-chip{display:flex;align-items:center;gap:10px;font-size:1.15rem;font-weight:700}
+.dest-chip svg{width:34px;height:34px}
+.gps{width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.35);border:2px solid currentColor}
+.gps.ok{background:#3BE37A}
+.round{width:60px;height:60px;border-radius:50%;border:3px solid currentColor;background:transparent;color:inherit;display:grid;place-items:center}
+.round svg{width:30px;height:30px}
+.trip-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:10px 20px;gap:14px}
+.big-icon svg{width:min(52vw,230px);height:min(52vw,230px)}
+.dest-photo{max-width:min(70vw,320px);max-height:28vh;border-radius:20px;border:5px solid #fff;object-fit:cover;display:none}
+#trip.bajate .dest-photo.has, #trip.preparate .dest-photo.has{display:block}
+.title{font-size:clamp(2.2rem,9vw,3.6rem);font-weight:700;line-height:1.1;margin:0;max-width:16ch}
+.sub{font-size:clamp(1.2rem,4.8vw,1.6rem);margin:0;max-width:24ch;line-height:1.35}
+#trip.bajate .big-icon{animation:pulse 1.2s ease-in-out 3}
+@keyframes pulse{50%{transform:scale(1.08)}}
+@media (prefers-reduced-motion: reduce){#trip.bajate .big-icon{animation:none}}
+
+.track{width:min(90%,520px);display:flex;align-items:center;gap:10px}
+.track svg{width:36px;height:36px;flex:none}
+.rail{flex:1;height:10px;border-radius:5px;background:rgba(255,255,255,.35);position:relative}
+#trip.atento .rail,#trip.preparate .rail{background:rgba(0,0,0,.18)}
+.rail .dot{position:absolute;top:50%;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:currentColor;left:0;transition:left .8s}
+
+.dots{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.dots span{width:44px;height:44px;border-radius:50%;border:5px solid currentColor}
+.dots span.done{background:currentColor}
+.dots span.last{border-style:solid;box-shadow:0 0 0 5px rgba(255,255,255,.6)}
+
+.trip-actions{padding:14px 16px 20px;display:flex;flex-direction:column;gap:12px;max-width:620px;width:100%;margin:0 auto}
+.main-act{min-height:96px;border-radius:24px;border:0;font-size:1.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:14px;background:#fff;color:var(--ink)}
+#trip.atento .main-act,#trip.preparate .main-act{background:#1B1B1B;color:#fff}
+.main-act svg{width:48px;height:48px}
+.row{display:flex;gap:12px}
+.row button{flex:1;min-height:70px;border-radius:20px;border:3px solid currentColor;background:transparent;color:inherit;font-size:1.2rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px}
+.row button svg{width:32px;height:32px}
+.undo{background:none;border:0;color:inherit;opacity:.8;font-size:1rem;text-decoration:underline;padding:6px}
+
+.sim{background:rgba(0,0,0,.25);color:#fff;padding:10px 16px;font-size:1rem;display:none;gap:10px;flex-direction:column}
+.sim.on{display:flex}
+.sim label{display:flex;gap:10px;align-items:center}
+.sim input[type=range]{flex:1}
+.sim button{padding:8px 12px;border-radius:10px;border:2px solid #fff;background:transparent;color:#fff}
+
+/* ---------- Ayuda ---------- */
+#help{background:var(--purple);color:#fff}
+.help-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:20px;text-align:center}
+.contact-name{font-size:clamp(2rem,8vw,3rem);font-weight:700;margin:0}
+.contact-phone{font-size:clamp(1.8rem,7vw,2.6rem);letter-spacing:.06em;margin:0}
+.call{min-height:100px;width:min(100%,520px);border-radius:26px;background:#fff;color:var(--purple);font-size:1.8rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:14px;text-decoration:none}
+.call svg{width:50px;height:50px}
+.missed-btn{min-height:80px;width:min(100%,520px);border-radius:22px;border:3px solid #fff;background:transparent;color:#fff;font-size:1.4rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:14px;padding:10px 16px}
+.missed-btn svg{width:40px;height:40px;flex:none}
+.missed-main{min-height:100px;background:var(--amber);color:var(--on-amber);border:0;font-size:1.5rem}
+.missed-main svg{width:56px;height:56px}
+.steps{display:flex;flex-direction:column;gap:14px;width:min(100%,520px)}
+.step{display:flex;align-items:center;gap:16px;background:rgba(255,255,255,.14);border-radius:20px;padding:14px;text-align:left;font-size:1.35rem;font-weight:700}
+.step svg{width:64px;height:64px;flex:none}
+.step{cursor:pointer;transition:background-color .2s}
+.step.reading{background:rgba(255,255,255,.32);outline:6px solid #FFD84D;outline-offset:2px}
+
+/* ---------- Ajustes ---------- */
+#settings{padding:20px;max-width:720px;margin:0 auto;gap:16px}
+#settings h2{margin:6px 0 0;font-size:1.5rem}
+#settings h3{margin:0 0 6px;font-size:1.2rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.card p{margin:0;color:var(--muted);line-height:1.45}
+.field{display:flex;flex-direction:column;gap:4px;font-size:.98rem}
+.field input[type=text],.field input[type=tel],.field input[type=number]{font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check{display:flex;gap:10px;align-items:center}
+.check input{width:24px;height:24px}
+.btn{padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-weight:700;text-align:left}
+.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.out{font-size:.95rem;color:var(--muted);white-space:pre-line;min-height:1em}
+.thumb{width:96px;height:96px;object-fit:cover;border-radius:12px;display:none}
+.thumb.has{display:block}
+@media (max-width:420px){.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- SVG icon sprite -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-train" viewBox="0 0 64 64"><rect x="14" y="6" width="36" height="40" rx="8" fill="none" stroke="currentColor" stroke-width="4"/><rect x="19" y="12" width="26" height="14" rx="3" fill="currentColor"/><circle cx="23" cy="36" r="3.5" fill="currentColor"/><circle cx="41" cy="36" r="3.5" fill="currentColor"/><path d="M20 46l-6 12M44 46l6 12M17 54h30" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></symbol>
+    <symbol id="i-city" viewBox="0 0 64 64"><path d="M6 58h52M10 58V26h14v32M24 58V12h18v46M42 58V32h12v26" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/><path d="M29 20h8M29 28h8M29 36h8M15 34h4M15 42h4M47 40h3M47 48h3" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></symbol>
+    <symbol id="i-house" viewBox="0 0 64 64"><path d="M8 30L32 10l24 20M14 26v30h36V26" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><rect x="27" y="38" width="10" height="18" fill="currentColor"/></symbol>
+    <symbol id="i-sit" viewBox="0 0 64 64"><circle cx="28" cy="10" r="6" fill="currentColor"/><path d="M26 20v18h16l4 18" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 22v24h14" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M26 26l10 6" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 64 64"><path d="M4 32s10-18 28-18 28 18 28 18-10 18-28 18S4 32 4 32z" fill="none" stroke="currentColor" stroke-width="4"/><circle cx="32" cy="32" r="9" fill="currentColor"/></symbol>
+    <symbol id="i-stand" viewBox="0 0 64 64"><rect x="40" y="6" width="18" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="4"/><path d="M49 10v44" stroke="currentColor" stroke-width="3"/><circle cx="22" cy="10" r="6" fill="currentColor"/><path d="M22 20v20M22 40l-6 18M22 40l6 18M22 24l10 8" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/></symbol>
+    <symbol id="i-exit" viewBox="0 0 64 64"><rect x="6" y="6" width="26" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="4"/><path d="M30 32h28M46 20l12 12-12 12" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="none" stroke="currentColor" stroke-width="5"/><path d="M19 33l9 9 18-19" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-tunnel" viewBox="0 0 64 64"><path d="M4 58V34a28 28 0 0156 0v24" fill="none" stroke="currentColor" stroke-width="5"/><path d="M16 58V36a16 16 0 0132 0v22z" fill="currentColor"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 64 64"><rect x="10" y="10" width="44" height="44" rx="10" fill="none" stroke="currentColor" stroke-width="5"/><rect x="22" y="20" width="7" height="24" rx="2" fill="currentColor"/><rect x="35" y="20" width="7" height="24" rx="2" fill="currentColor"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 64 64"><path d="M8 24h12l14-12v40L20 40H8z" fill="currentColor"/><path d="M42 22a14 14 0 010 20M48 14a24 24 0 010 36" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 64 64"><path d="M20 6l8 14-6 6c4 8 8 12 16 16l6-6 14 8-4 12C30 58 6 34 8 10z" fill="currentColor"/></symbol>
+    <symbol id="i-help" viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="none" stroke="currentColor" stroke-width="5"/><path d="M24 25a8 8 0 1112 7c-3 2-4 3-4 7" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><circle cx="32" cy="47" r="3.5" fill="currentColor"/></symbol>
+    <symbol id="i-back" viewBox="0 0 64 64"><path d="M40 12L20 32l20 20" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></g></symbol>
+    <symbol id="i-swap" viewBox="0 0 64 64"><path d="M10 22h40M40 12l10 10-10 10M54 44H14M24 34L14 44l10 10" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-uturn" viewBox="0 0 64 64"><path d="M14 58V26a14 14 0 0128 0v18" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><path d="M30 34l12 12 12-12" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<!-- ============ INICIO ============ -->
+<main id="home" class="screen on">
+  <div class="home-top">
+    <h1>Mi tren</h1>
+    <button class="gear" id="gearBtn" aria-label="Ajustes para la familia: mantén pulsado">
+      <span class="ring"></span><svg><use href="#i-gear"/></svg>
+    </button>
+  </div>
+  <button class="trip-btn to-work" data-trip="ida">
+    <img id="homeImgIda" alt="" hidden><svg id="homeSvgIda"><use href="#i-city"/></svg>
+    <span id="homeLblIda">Ir a Bilbao</span>
+  </button>
+  <button class="trip-btn to-home" data-trip="vuelta">
+    <img id="homeImgVuelta" alt="" hidden><svg id="homeSvgVuelta"><use href="#i-house"/></svg>
+    <span id="homeLblVuelta">Volver a casa</span>
+  </button>
+  <button class="help-btn-home" data-go="help"><svg><use href="#i-phone"/></svg>Ayuda</button>
+  <p class="hint">Familia: mantén pulsado el engranaje para entrar en los ajustes.</p>
+</main>
+
+<!-- ============ VIAJE ============ -->
+<section id="trip" class="screen sentado" aria-live="polite">
+  <div class="sim" id="simBar">
+    <label>Distancia simulada <input type="range" id="simRange" min="0" max="30" step="0.1" value="25"><b id="simVal">25 km</b></label>
+    <div class="row" style="gap:8px"><button id="simTunnel">Saltar al túnel</button></div>
+  </div>
+  <div class="trip-head">
+    <button class="round" id="tripBack" aria-label="Volver al inicio"><svg><use href="#i-back"/></svg></button>
+    <div class="dest-chip"><svg id="destIcon"><use href="#i-city"/></svg><span id="destName">Bilbao</span></div>
+    <span class="gps" id="gpsDot" title="Señal de ubicación"></span>
+  </div>
+  <div class="trip-body">
+    <img class="dest-photo" id="destPhoto" alt="Foto de tu parada">
+    <div class="big-icon" id="bigIcon"><svg><use href="#i-sit"/></svg></div>
+    <h2 class="title" id="title">Sigue sentado</h2>
+    <p class="sub" id="sub">Yo te aviso.</p>
+    <div class="track" id="track">
+      <svg><use href="#i-train"/></svg>
+      <div class="rail"><span class="dot" id="railDot"></span></div>
+      <svg id="trackEnd"><use href="#i-city"/></svg>
+    </div>
+    <div class="dots" id="dots" hidden></div>
+  </div>
+  <div class="trip-actions">
+    <button class="main-act" id="mainAct" hidden></button>
+    <button class="undo" id="undoBtn" hidden>He tocado sin querer: quitar una parada</button>
+    <div class="row">
+      <button id="repeatBtn"><svg><use href="#i-sound"/></svg>Repetir</button>
+      <button data-go="help"><svg><use href="#i-phone"/></svg>Ayuda</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ AYUDA ============ -->
+<section id="help" class="screen">
+  <div class="trip-head">
+    <button class="round" id="helpBack" aria-label="Volver"><svg><use href="#i-back"/></svg></button>
+  </div>
+  <div class="help-body" id="helpMain">
+    <svg style="width:120px;height:120px"><use href="#i-phone"/></svg>
+    <p class="contact-name" id="cName">Ama</p>
+    <p class="contact-phone" id="cPhone"></p>
+    <a class="call" id="callLink" href="#" target="_top"><svg><use href="#i-phone"/></svg>Llamar</a>
+    <button class="missed-btn missed-main" id="missedBtn"><svg><use href="#i-uturn"/></svg>Me he pasado de parada</button>
+  </div>
+  <div class="help-body" id="helpMissed" hidden>
+    <h2 class="title" style="font-size:2.2rem">Tranquilo</h2>
+    <div class="steps">
+      <div class="step"><svg><use href="#i-exit"/></svg>Bájate en la próxima parada.</div>
+      <div class="step"><svg><use href="#i-swap"/></svg>Ve al otro lado, al tren que va al revés.</div>
+      <div class="step"><svg><use href="#i-train"/></svg>Sube y bájate en la primera parada.</div>
+      <div class="step"><svg><use href="#i-phone"/></svg>Si tienes dudas, llama.</div>
+    </div>
+    <button class="missed-btn" id="missedRepeat"><svg><use href="#i-sound"/></svg>Repetir</button>
+  </div>
+</section>
+
+<!-- ============ AJUSTES ============ -->
+<section id="settings" class="screen">
+  <div class="home-top">
+    <h2>Ajustes para la familia</h2>
+    <button class="btn primary" id="settingsDone">Guardar y salir</button>
+  </div>
+
+  <div class="card">
+    <h3>Persona de contacto</h3>
+    <div class="grid2">
+      <label class="field">Nombre<input type="text" id="sName"></label>
+      <label class="field">Teléfono<input type="tel" id="sPhone"></label>
+    </div>
+  </div>
+
+  <div class="card" id="cardIda"></div>
+  <div class="card" id="cardVuelta"></div>
+
+  <div class="card">
+    <h3>Comprobaciones</h3>
+    <p>Hazlas en el móvil que va a llevar. La primera vez el móvil pedirá permiso para usar la ubicación.</p>
+    <button class="btn" id="testGps">Probar la ubicación</button>
+    <button class="btn" id="testVoice">Probar la voz</button>
+    <div class="out" id="testOut"></div>
+    <label class="check"><input type="checkbox" id="sSim"> Modo prueba en casa (simula el viaje con una barra, sin GPS)</label>
+  </div>
+
+  <div class="card">
+    <h3>Cómo funciona</h3>
+    <p>Fuera del túnel, el móvil mide la distancia a la parada con el GPS. Los últimos kilómetros hasta Zazpikaleak van bajo tierra y allí el GPS no llega, así que la app pasa a contar paradas: cada vez que el tren para, él toca el botón grande. Si el GPS se pierde un rato, la app entiende que ya está en el túnel.</p>
+    <p>Los valores vienen de datos públicos y son aproximados. Comprobad en el primer ensayo cuántas paradas hay desde que el tren entra en el túnel y, si hace falta, usad «Guardar mi posición actual» estando en el andén de destino.</p>
+    <p>Mientras la app está abierta, intenta mantener la pantalla encendida. Si el móvil se bloquea, los avisos se detienen.</p>
+    <button class="btn" id="resetAll">Volver a los valores iniciales</button>
+  </div>
+</section>
+
+<script>
+(function(){
+"use strict";
+const KEY = "mi-tren-v1";
+const DEFAULTS = {
+  contactName: "Ama",
+  contactPhone: "",
+  sim: false,
+  trips: {
+    ida: {
+      label: "Ir a Bilbao", dest: "Bilbao", icon: "i-city",
+      lat: 43.26000, lon: -2.92194,   // Zazpikaleak / Casco Viejo
+      atentoKm: 6, preparaKm: 1.5, bajateKm: 0.4,
+      count: true, stops: 4,           // Otxarkoaga, Txurdinaga, Zurbaranbarri, Zazpikaleak
+      photo: ""
+    },
+    vuelta: {
+      label: "Volver a casa", dest: "Durango", icon: "i-house",
+      lat: 43.16889, lon: -2.63000,   // centro de Durango (aprox.)
+      atentoKm: 5, preparaKm: 2, bajateKm: 0.5,
+      count: true, stops: 1,
+      photo: ""
+    }
+  }
+};
+
+let cfg = load();
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return structuredClone(DEFAULTS);
+    const c = JSON.parse(raw);
+    const m = structuredClone(DEFAULTS);
+    Object.assign(m, c);
+    m.trips = {ida:Object.assign({}, DEFAULTS.trips.ida, (c.trips||{}).ida), vuelta:Object.assign({}, DEFAULTS.trips.vuelta, (c.trips||{}).vuelta)};
+    return m;
+  }catch(e){ return structuredClone(DEFAULTS); }
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(cfg)); }catch(e){} }
+
+const $ = id => document.getElementById(id);
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("on", s.id===id));
+  window.scrollTo(0,0);
+}
+
+/* ---------- Voz y vibración ---------- */
+let voice = null;
+function pickVoice(){
+  try{
+    const vs = speechSynthesis.getVoices();
+    voice = vs.find(v=>/^es(-|_)ES/i.test(v.lang)) || vs.find(v=>/^es/i.test(v.lang)) || null;
+  }catch(e){}
+}
+if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+let lastSpoken = "";
+function say(text, quick){
+  if(!quick) lastSpoken = text;
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "es-ES"; u.rate = 0.9; if(voice) u.voice = voice;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function buzz(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
+
+/* ---------- Pantalla encendida ---------- */
+let wake = null;
+async function keepAwake(){
+  try{ if("wakeLock" in navigator){ wake = await navigator.wakeLock.request("screen"); } }catch(e){}
+}
+function releaseAwake(){ try{ wake && wake.release(); }catch(e){} wake = null; }
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && J.active) keepAwake(); });
+
+/* ---------- Distancia ---------- */
+function km(a,b,c,d){
+  const R=6371, r=x=>x*Math.PI/180;
+  const dLa=r(c-a), dLo=r(d-b);
+  const h=Math.sin(dLa/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(dLo/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+
+/* ---------- Viaje ---------- */
+const J = { active:false, key:"ida", t:null, phase:"sentado", counting:false, done:0,
+            dist:null, startDist:null, lastFix:0, watch:null, timers:[] };
+
+const PHASES = {
+  sentado:  {icon:"i-sit",   title:"Sigue sentado",          sub:"Yo te aviso. Deja esta pantalla abierta.",
+             voice:"Siéntate tranquilo. Deja esta pantalla abierta. Yo te aviso cuando tengas que bajar."},
+  atento:   {icon:"i-eye",   title:"Ya falta poco",          sub:"Sigue sentado.",
+             voice:"Ya falta poco. Sigue sentado."},
+  atentoT:  {icon:"i-tunnel",title:"Ya falta poco",          sub:"Cuando el tren entre en el túnel, toca el botón.",
+             voice:"Ya falta poco. Sigue sentado. Cuando el tren entre en el túnel, toca el botón grande."},
+  contar:   {icon:"i-stop",  title:"Cuenta las paradas",     sub:"Cada vez que el tren pare, toca el botón.",
+             voice:"Estamos en el túnel. Cada vez que el tren pare, toca el botón grande."},
+  preparate:{icon:"i-stand", title:"La próxima es la tuya",  sub:"Cuando el tren arranque, ponte de pie junto a la puerta.",
+             voice:"Atención. La próxima parada es la tuya. Cuando el tren arranque, ponte de pie junto a la puerta."},
+  bajate:   {icon:"i-exit",  title:"¡Bájate ahora!",         sub:"Cuando se abran las puertas, sal del tren.",
+             voice:"Bájate ahora. Cuando se abran las puertas, sal del tren."},
+  llegado:  {icon:"i-check", title:"¡Muy bien!",             sub:"Has llegado.",
+             voice:"¡Muy bien! Has llegado."}
+};
+
+function clearTimers(){ J.timers.forEach(clearInterval); J.timers=[]; }
+
+function startTrip(key){
+  J.key = key; J.t = cfg.trips[key];
+  J.active = true; J.phase = "sentado"; J.counting = false; J.done = 0;
+  J.dist = null; J.startDist = null; J.lastFix = 0;
+  $("destName").textContent = J.t.dest;
+  $("destIcon").innerHTML = '<use href="#'+J.t.icon+'"/>';
+  $("trackEnd").innerHTML = '<use href="#'+J.t.icon+'"/>';
+  const ph = $("destPhoto");
+  if(J.t.photo){ ph.src = J.t.photo; ph.classList.add("has"); } else { ph.removeAttribute("src"); ph.classList.remove("has"); }
+  $("simBar").classList.toggle("on", !!cfg.sim);
+  show("trip");
+  keepAwake();
+  render(true);
+  if(cfg.sim){ onDistance(parseFloat($("simRange").value)); }
+  else startGps();
+  J.timers.push(setInterval(tick, 5000));
+}
+
+function endTrip(){
+  J.active = false; clearTimers(); stopGps(); releaseAwake();
+  try{ speechSynthesis.cancel(); }catch(e){}
+  show("home");
+}
+
+function startGps(){
+  if(!("geolocation" in navigator)){ say("Este móvil no puede usar la ubicación."); return; }
+  J.watch = navigator.geolocation.watchPosition(p=>{
+    J.lastFix = Date.now();
+    $("gpsDot").classList.add("ok");
+    if(p.coords.accuracy > 800) return;
+    onDistance(km(p.coords.latitude, p.coords.longitude, J.t.lat, J.t.lon));
+  }, err=>{
+    $("gpsDot").classList.remove("ok");
+    if(err.code===1){ $("sub").textContent = "Falta el permiso de ubicación. Pide ayuda a tu familia."; }
+  }, {enableHighAccuracy:true, maximumAge:5000, timeout:20000});
+}
+function stopGps(){ if(J.watch!==null){ try{ navigator.geolocation.clearWatch(J.watch); }catch(e){} J.watch=null; } }
+
+function onDistance(d){
+  J.dist = d;
+  if(J.startDist===null || d > J.startDist) J.startDist = Math.max(d, J.t.atentoKm + 1);
+  const p = J.phase;
+  if(p==="bajate" || p==="llegado") { updateRail(); return; }
+  if(d <= J.t.bajateKm){ setPhase("bajate"); }
+  else if(!J.t.count && d <= J.t.preparaKm && p!=="preparate"){ setPhase("preparate"); }
+  else if(d <= J.t.atentoKm && p==="sentado"){ setPhase("atento"); }
+  updateRail();
+}
+
+function tick(){
+  if(!J.active) return;
+  if(!cfg.sim){
+    const lost = !J.lastFix || (Date.now()-J.lastFix > 35000);
+    $("gpsDot").classList.toggle("ok", !lost);
+    // Sin señal estando ya cerca: el tren está en el túnel
+    if(lost && J.lastFix && J.phase==="atento" && J.t.count && !J.counting) enterCounting();
+  }
+}
+
+function enterCounting(){
+  if(J.counting) return;
+  J.counting = true; J.done = 0;
+  if(J.t.stops <= 1){ setPhase("preparate"); return; }
+  render(true);
+}
+
+function stopTapped(){
+  J.done++;
+  buzz(80);
+  const left = J.t.stops - J.done;
+  if(left <= 0){ setPhase("bajate"); return; }
+  if(left === 1){ setPhase("preparate"); return; }
+  render(false);
+  say("Muy bien. Faltan " + left + " paradas.");
+}
+
+function undoStop(){
+  if(J.done<=0) return;
+  J.done--;
+  const left = J.t.stops - J.done;
+  J.phase = left===1 ? "preparate" : "atento";
+  render(false);
+  say("Vale. Faltan " + left + " paradas.");
+}
+
+let repeatTimer = null;
+function setPhase(p){
+  if(J.phase===p && p!=="atento") return;
+  J.phase = p;
+  render(true);
+  clearInterval(repeatTimer);
+  if(p==="preparate"){ buzz([300,150,300]); repeatTimer = setInterval(()=>say(lastSpoken), 90000); }
+  if(p==="bajate"){ buzz([600,200,600,200,600]); setTimeout(()=>J.phase==="bajate"&&say(lastSpoken), 6000); repeatTimer = setInterval(()=>say(lastSpoken), 30000); }
+}
+
+function currentKey(){
+  const p = J.phase;
+  if(p==="atento"){
+    if(J.t.count && J.counting) return "contar";
+    if(J.t.count) return "atentoT";
+    return "atento";
+  }
+  return p;
+}
+
+function render(speak){
+  disarm();
+  const k = currentKey(), P = PHASES[k];
+  const el = $("trip");
+  el.className = "screen on " + J.phase;
+  $("bigIcon").innerHTML = '<svg><use href="#'+P.icon+'"/></svg>';
+  $("title").textContent = P.title;
+  $("sub").textContent = P.sub;
+
+  // Paradas
+  const showDots = J.t.count && J.counting && J.t.stops > 1 && (J.phase==="atento"||J.phase==="preparate");
+  const dots = $("dots");
+  dots.hidden = !showDots;
+  if(showDots){
+    dots.innerHTML = "";
+    for(let i=0;i<J.t.stops;i++){
+      const s = document.createElement("span");
+      if(i < J.done) s.className = "done";
+      if(i === J.t.stops-1) s.classList.add("last");
+      dots.appendChild(s);
+    }
+    dots.setAttribute("aria-label", "Faltan " + (J.t.stops-J.done) + " paradas");
+  }
+  $("track").hidden = showDots || J.phase==="bajate" || J.phase==="llegado";
+
+  // Botón principal
+  const b = $("mainAct");
+  b.hidden = false;
+  if(k==="atentoT"){ b.innerHTML = '<svg><use href="#i-tunnel"/></svg>Estamos en el túnel'; b.onclick = ()=>enterCounting(); }
+  else if(k==="contar" || (J.phase==="preparate" && J.t.count && J.counting)){ b.innerHTML = '<svg><use href="#i-stop"/></svg>El tren ha parado'; b.onclick = stopTapped; }
+  else if(J.phase==="preparate" || J.phase==="bajate"){ b.innerHTML = '<svg><use href="#i-check"/></svg>Ya he bajado'; b.onclick = armOr(b, "Ya he bajado", ()=>{ clearInterval(repeatTimer); setPhase("llegado"); }); }
+  else if(J.phase==="llegado"){ b.innerHTML = '<svg><use href="#i-check"/></svg>Terminar'; b.onclick = armOr(b, "Terminar", endTrip); }
+  else { b.hidden = true; }
+  $("undoBtn").hidden = !(J.counting && J.done>0 && (J.phase==="atento"||J.phase==="preparate"));
+
+  updateRail();
+  if(speak) say(P.voice);
+}
+
+function updateRail(){
+  const d = J.dist, s = J.startDist;
+  let f = 0;
+  if(d!==null && s) f = Math.min(1, Math.max(0, 1 - d/s));
+  if(J.counting) f = Math.max(f, 0.85 + 0.15*(J.done/Math.max(1,J.t.stops)));
+  $("railDot").style.left = (f*100)+"%";
+  if(cfg.sim) $("simVal").textContent = (d===null?"-":d.toFixed(1))+" km";
+}
+
+/* ---------- Eventos ---------- */
+/* Primer toque: dice qué es. Segundo toque (antes de 5 s): lo hace. */
+let armed = null, armT = null;
+function disarm(){ if(armed) armed.classList.remove("armed"); armed = null; clearTimeout(armT); }
+function armOr(el, label, action){
+  return e=>{
+    if(armed===el){ disarm(); action(e); return; }
+    if(e && e.preventDefault) e.preventDefault();
+    disarm(); armed = el; el.classList.add("armed");
+    say((typeof label==="function" ? label() : label) + ". Toca otra vez.");
+    buzz(40);
+    armT = setTimeout(disarm, 5000);
+  };
+}
+document.querySelectorAll("[data-trip]").forEach(b=>b.addEventListener("click", armOr(b, ()=>cfg.trips[b.dataset.trip].label, ()=>startTrip(b.dataset.trip))));
+$("tripBack").onclick = armOr($("tripBack"), "Salir del viaje", endTrip);
+$("repeatBtn").onclick = ()=>say(lastSpoken || PHASES[currentKey()].voice);
+$("undoBtn").onclick = armOr($("undoBtn"), "Quitar una parada", undoStop);
+$("simRange").oninput = e=>{ if(J.active && cfg.sim) onDistance(parseFloat(e.target.value)); };
+$("simTunnel").onclick = ()=>{
+  if(!J.active) return;
+  if(J.phase==="sentado"){ J.phase = "atento"; const r = $("simRange"); r.value = Math.min(parseFloat(r.value), J.t.atentoKm - 1); J.dist = parseFloat(r.value); }
+  if(J.t.count) enterCounting(); else render(true);
+};
+
+let helpFrom = "home";
+document.querySelectorAll('[data-go="help"]').forEach(b=>b.addEventListener("click", armOr(b, "Ayuda", ()=>{
+  helpFrom = J.active ? "trip" : "home";
+  $("helpMain").hidden = false; $("helpMissed").hidden = true;
+  fillContact(); show("help");
+  say("¿Necesitas ayuda? Toca el botón blanco para llamar a " + (cfg.contactName||"tu familia") + ".");
+})));
+$("helpBack").onclick = armOr($("helpBack"), "Volver", ()=>{ show(helpFrom); });
+$("callLink").addEventListener("click", armOr($("callLink"), ()=>"Llamar a " + (cfg.contactName||"tu familia"), ()=>{}));
+const MISSED = "Tranquilo. Bájate en la próxima parada. Ve al otro lado, al tren que va al revés. Sube y bájate en la primera parada. Si tienes dudas, llama.";
+const STEPS = ()=>Array.from(document.querySelectorAll("#helpMissed .step"));
+function readSteps(){
+  try{ speechSynthesis.cancel(); }catch(e){}
+  const list = STEPS();
+  lastSpoken = MISSED;
+  const queue = [{t:"Tranquilo.", el:null}].concat(list.map(el=>({t:el.textContent.trim(), el})));
+  queue.forEach(q=>{
+    try{
+      const u = new SpeechSynthesisUtterance(q.t);
+      u.lang = "es-ES"; u.rate = 0.9; if(voice) u.voice = voice;
+      u.onstart = ()=>list.forEach(x=>x.classList.toggle("reading", x===q.el));
+      u.onend = ()=>{ if(q.el) q.el.classList.remove("reading"); };
+      speechSynthesis.speak(u);
+    }catch(e){}
+  });
+}
+$("missedBtn").onclick = armOr($("missedBtn"), "Me he pasado de parada", ()=>{ $("helpMain").hidden = true; $("helpMissed").hidden = false; readSteps(); });
+$("missedRepeat").onclick = readSteps;
+STEPS().forEach(el=>el.addEventListener("click", ()=>{
+  STEPS().forEach(x=>x.classList.toggle("reading", x===el));
+  say(el.textContent.trim());
+}));
+
+/* Pasar el dedo (o el ratón) por encima: dice qué es, sin pulsarlo */
+let lastTouched = null, hoverT = null;
+function sayable(el){
+  if(!el || !el.closest) return null;
+  const t = el.closest("#home button, #trip button, #help button, #help a, .step");
+  return (t && !t.closest("[hidden]")) ? t : null;
+}
+function labelOf(el){ return (el.getAttribute("aria-label") || el.textContent).trim(); }
+document.addEventListener("touchmove", e=>{
+  const p = e.touches[0]; if(!p) return;
+  const el = sayable(document.elementFromPoint(p.clientX, p.clientY));
+  if(el && el!==lastTouched){ lastTouched = el; say(labelOf(el), true); buzz(20); }
+  if(!el) lastTouched = null;
+}, {passive:true});
+document.addEventListener("touchend", ()=>{ lastTouched = null; }, {passive:true});
+document.addEventListener("pointerover", e=>{
+  if(e.pointerType!=="mouse") return;
+  const el = sayable(e.target);
+  clearTimeout(hoverT);
+  if(!el){ lastTouched = null; return; }
+  if(el!==lastTouched) hoverT = setTimeout(()=>{ lastTouched = el; say(labelOf(el), true); }, 350);
+});
+
+function fillContact(){
+  $("cName").textContent = cfg.contactName || "Familia";
+  $("cPhone").textContent = cfg.contactPhone || "Añade el teléfono en los ajustes";
+  const tel = (cfg.contactPhone||"").replace(/[^\d+]/g,"");
+  $("callLink").href = tel ? "tel:"+tel : "#";
+}
+
+/* ---------- Engranaje: mantener pulsado ---------- */
+let holdT = null;
+const gear = $("gearBtn");
+const startHold = e=>{ e.preventDefault(); gear.classList.add("holding"); holdT = setTimeout(()=>{ gear.classList.remove("holding"); openSettings(); }, 1600); };
+const stopHold = ()=>{ gear.classList.remove("holding"); clearTimeout(holdT); };
+gear.addEventListener("pointerdown", startHold);
+["pointerup","pointerleave","pointercancel"].forEach(ev=>gear.addEventListener(ev, stopHold));
+gear.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" ") openSettings(); });
+
+/* ---------- Ajustes ---------- */
+function tripCard(key){
+  const t = cfg.trips[key];
+  const isIda = key==="ida";
+  return `
+    <h3>${isIda ? "Ida: hacia Bilbao (Zazpikaleak)" : "Vuelta: hacia Durango"}</h3>
+    <div class="grid2">
+      <label class="field">Texto del botón<input type="text" data-k="${key}.label" value="${esc(t.label)}"></label>
+      <label class="field">Nombre de la parada<input type="text" data-k="${key}.dest" value="${esc(t.dest)}"></label>
+      <label class="field">Latitud destino<input type="number" step="0.00001" data-k="${key}.lat" value="${t.lat}"></label>
+      <label class="field">Longitud destino<input type="number" step="0.00001" data-k="${key}.lon" value="${t.lon}"></label>
+      <label class="field">Aviso «ya falta poco» a (km)<input type="number" step="0.1" data-k="${key}.atentoKm" value="${t.atentoKm}"></label>
+      <label class="field">Aviso «bájate» por GPS a (km)<input type="number" step="0.1" data-k="${key}.bajateKm" value="${t.bajateKm}"></label>
+    </div>
+    <label class="check"><input type="checkbox" data-k="${key}.count" ${t.count?"checked":""}> El final del trayecto va bajo tierra: contar paradas desde el túnel</label>
+    <div class="grid2">
+      <label class="field">Paradas desde el túnel (incluida la suya)<input type="number" min="1" max="10" data-k="${key}.stops" value="${t.stops}"></label>
+      <label class="field">Sin túnel: aviso «la próxima es la tuya» a (km)<input type="number" step="0.1" data-k="${key}.preparaKm" value="${t.preparaKm}"></label>
+    </div>
+    <button class="btn" data-here="${key}">Guardar mi posición actual como destino</button>
+    <label class="field">Foto de la parada (el cartel o la salida que tiene que reconocer)
+      <input type="file" accept="image/*" data-photo="${key}">
+    </label>
+    <img class="thumb ${t.photo?"has":""}" id="thumb-${key}" ${t.photo?`src="${t.photo}"`:""} alt="">
+    <div class="out" id="out-${key}"></div>`;
+}
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
+
+function openSettings(){
+  $("sName").value = cfg.contactName; $("sPhone").value = cfg.contactPhone; $("sSim").checked = !!cfg.sim;
+  $("cardIda").innerHTML = tripCard("ida");
+  $("cardVuelta").innerHTML = tripCard("vuelta");
+  document.querySelectorAll("[data-here]").forEach(b=>b.onclick = ()=>saveHere(b.dataset.here));
+  document.querySelectorAll("[data-photo]").forEach(inp=>inp.onchange = ()=>loadPhoto(inp));
+  show("settings");
+}
+function readSettings(){
+  cfg.contactName = $("sName").value.trim();
+  cfg.contactPhone = $("sPhone").value.trim();
+  cfg.sim = $("sSim").checked;
+  document.querySelectorAll("[data-k]").forEach(inp=>{
+    const [key, f] = inp.dataset.k.split(".");
+    if(inp.type==="checkbox") cfg.trips[key][f] = inp.checked;
+    else if(inp.type==="number"){ const v = parseFloat(inp.value); if(!isNaN(v)) cfg.trips[key][f] = v; }
+    else cfg.trips[key][f] = inp.value.trim() || cfg.trips[key][f];
+  });
+  cfg.trips.ida.stops = Math.max(1, Math.round(cfg.trips.ida.stops));
+  cfg.trips.vuelta.stops = Math.max(1, Math.round(cfg.trips.vuelta.stops));
+}
+$("settingsDone").onclick = ()=>{ readSettings(); save(); refreshHome(); show("home"); };
+$("resetAll").onclick = ()=>{ if(confirm("¿Volver a los valores iniciales? Se borran las fotos y el contacto.")){ cfg = structuredClone(DEFAULTS); save(); openSettings(); refreshHome(); } };
+
+function saveHere(key){
+  const out = $("out-"+key);
+  out.textContent = "Buscando la posición…";
+  navigator.geolocation.getCurrentPosition(p=>{
+    readSettings();
+    cfg.trips[key].lat = +p.coords.latitude.toFixed(5);
+    cfg.trips[key].lon = +p.coords.longitude.toFixed(5);
+    save(); openSettings();
+    $("out-"+key).textContent = "Guardado. Precisión: " + Math.round(p.coords.accuracy) + " m.";
+  }, e=>{ out.textContent = gpsError(e); }, {enableHighAccuracy:true, timeout:20000});
+}
+
+function loadPhoto(inp){
+  const file = inp.files && inp.files[0]; if(!file) return;
+  const key = inp.dataset.photo;
+  const img = new Image(), url = URL.createObjectURL(file);
+  img.onload = ()=>{
+    const max = 700, r = Math.min(1, max/Math.max(img.width, img.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.width*r); c.height = Math.round(img.height*r);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    readSettings();
+    cfg.trips[key].photo = c.toDataURL("image/jpeg", 0.75);
+    URL.revokeObjectURL(url);
+    save(); openSettings();
+  };
+  img.src = url;
+}
+
+function gpsError(e){
+  if(e.code===1){
+    let framed = false; try{ framed = window.self !== window.top; }catch(x){ framed = true; }
+    return framed
+      ? "Esta página está abierta dentro de otra web (Claude) y el navegador no le deja usar la ubicación, aunque Chrome tenga el permiso. Hay que abrir la app desde su propia dirección."
+      : "El móvil no ha dado permiso de ubicación. Revisa los permisos del navegador para esta página.";
+  }
+  if(e.code===2) return "No se encuentra la posición. Prueba junto a una ventana o en la calle.";
+  return "La ubicación ha tardado demasiado. Inténtalo otra vez.";
+}
+
+$("testGps").onclick = ()=>{
+  const out = $("testOut");
+  if(!("geolocation" in navigator)){ out.textContent = "Este navegador no permite usar la ubicación."; return; }
+  out.textContent = "Pidiendo la ubicación…";
+  navigator.geolocation.getCurrentPosition(p=>{
+    readSettings();
+    const c = p.coords;
+    out.textContent = "La ubicación funciona.\nPrecisión: " + Math.round(c.accuracy) + " m" +
+      "\nDistancia a " + cfg.trips.ida.dest + ": " + km(c.latitude,c.longitude,cfg.trips.ida.lat,cfg.trips.ida.lon).toFixed(1) + " km" +
+      "\nDistancia a " + cfg.trips.vuelta.dest + ": " + km(c.latitude,c.longitude,cfg.trips.vuelta.lat,cfg.trips.vuelta.lon).toFixed(1) + " km";
+  }, e=>{ out.textContent = gpsError(e); }, {enableHighAccuracy:true, timeout:20000});
+};
+$("testVoice").onclick = ()=>{
+  say("Hola. Así sonarán los avisos en el tren.");
+  $("testOut").textContent = ("speechSynthesis" in window) ? (voice ? "Voz: " + voice.name : "Voz del sistema (si no se oye, sube el volumen).") : "Este navegador no puede leer en voz alta.";
+};
+
+function refreshHome(){
+  ["ida","vuelta"].forEach(key=>{
+    const t = cfg.trips[key], K = key==="ida" ? "Ida" : "Vuelta";
+    $("homeLbl"+K).textContent = t.label;
+    const img = $("homeImg"+K), svg = $("homeSvg"+K);
+    if(t.photo){ img.src = t.photo; img.hidden = false; svg.style.display = "none"; }
+    else { img.hidden = true; svg.style.display = ""; }
+  });
+}
+refreshHome();
+})();
+</script>
+<script>
+/* Funcionar sin conexión: el móvil guarda una copia la primera vez que se abre con internet */
+if("serviceWorker" in navigator && location.protocol==="https:"){
+  window.addEventListener("load", function(){
+    try{ navigator.serviceWorker.register("sw.js").catch(function(){}); }catch(e){}
+  });
+}
+</script>
+</body>
+</html>
